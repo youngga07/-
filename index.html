@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>体育期刊雷达 · Sports Journal Radar</title>
+<style>
+  :root {
+    --bg: #f7f5f0;
+    --card: #ffffff;
+    --ink: #2b2b2b;
+    --muted: #8a8578;
+    --soft: #b8b2a3;
+    --accent: #d97757;
+    --accent-soft: #fbe8dd;
+    --accent-dark: #c26547;
+    --line: #eae6dd;
+    --ok: #6b8e5a;
+    --warn: #c4a030;
+    --err: #c44;
+    --mark: #fff6d6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 36px 24px 80px; }
+  header { margin-bottom: 28px; }
+  h1 {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  h1 .en {
+    font-size: 15px;
+    color: var(--muted);
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+  .tagline { color: var(--muted); font-size: 14px; }
+
+  .controls {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .controls select, .controls button {
+    font-family: inherit;
+    font-size: 14px;
+  }
+  .controls select {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 12px;
+    background: #fafaf7;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .controls select:focus { outline: none; border-color: var(--accent); }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-primary:hover { background: var(--accent-dark); }
+  .btn-primary:disabled { background: var(--soft); cursor: not-allowed; }
+  .status { color: var(--muted); font-size: 13px; flex: 1; min-width: 120px; }
+  .status.err { color: var(--err); }
+  .status.ok { color: var(--ok); }
+
+  .filter-section {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin-bottom: 14px;
+  }
+  .filter-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 8px 0;
+  }
+  .filter-row + .filter-row { border-top: 1px dashed var(--line); }
+  .filter-label {
+    flex-shrink: 0;
+    width: 42px;
+    font-size: 13px;
+    color: var(--muted);
+    padding-top: 7px;
+    font-weight: 500;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex: 1;
+  }
+  .chip {
+    border: 1px solid var(--line);
+    background: #fafaf7;
+    color: var(--ink);
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: all 0.12s;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .chip .count { opacity: 0.7; margin-left: 4px; font-size: 11px; }
+
+  .summary-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 4px;
+    font-size: 13px;
+    color: var(--muted);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .summary-bar .left { display: flex; gap: 16px; align-items: center; }
+  .summary-bar label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .summary-bar input[type="checkbox"] { accent-color: var(--accent); cursor: pointer; }
+  .btn-small {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-small:hover { color: var(--accent); border-color: var(--accent); }
+
+  .paper {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px 22px;
+    margin-bottom: 10px;
+    transition: border-color 0.12s, box-shadow 0.12s;
+    position: relative;
+  }
+  .paper:hover { border-color: #d4cfc0; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+  .paper.favorited { border-left: 3px solid var(--accent); }
+  .paper-head {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+  .paper-titles { flex: 1; min-width: 0; }
+  .paper-title {
+    font-size: 15.5px;
+    font-weight: 600;
+    line-height: 1.45;
+    margin-bottom: 4px;
+    color: #1f1f1f;
+  }
+  .paper-title-zh {
+    font-size: 14px;
+    color: #5a5548;
+    margin-bottom: 2px;
+  }
+  .paper-title-zh.loading {
+    color: var(--soft);
+    font-style: italic;
+    font-size: 12.5px;
+  }
+  .paper-star {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: var(--soft);
+    padding: 0 2px;
+    transition: color 0.15s, transform 0.1s;
+    flex-shrink: 0;
+  }
+  .paper-star:hover { transform: scale(1.15); }
+  .paper-star.on { color: var(--accent); }
+  .paper-meta {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  .paper-meta .journal {
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .paper-meta a {
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--soft);
+  }
+  .paper-meta a:hover { color: var(--accent); border-color: var(--accent); }
+  .paper-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 2px;
+  }
+  .tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--accent-soft);
+    color: var(--accent-dark);
+    font-weight: 500;
+  }
+  .tag.method { background: #e8eee2; color: #4a6b3d; }
+  .tag.journal { background: #eceae3; color: #5a5548; }
+  .paper-abstract {
+    display: none;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--line);
+    font-size: 13.5px;
+    color: #4a4538;
+    line-height: 1.65;
+  }
+  .paper.expanded .paper-abstract { display: block; }
+  .paper-expand {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    user-select: none;
+  }
+  .paper-expand:hover { color: var(--accent); }
+  .paper-abstract p { margin-bottom: 6px; }
+  .paper-abstract mark {
+    background: var(--mark);
+    padding: 0 2px;
+    border-radius: 2px;
+  }
+
+  .empty, .loading-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .loading-state .bar {
+    max-width: 360px;
+    margin: 16px auto;
+    height: 4px;
+    background: var(--line);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .loading-state .bar-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.3s;
+    border-radius: 2px;
+  }
+  .loading-state .current {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  .banner {
+    background: #fdf4e0;
+    border: 1px solid #e8d896;
+    color: #8a6d1a;
+    padding: 10px 16px;
+    border-radius: 10px;
+    margin-bottom: 14px;
+    font-size: 13px;
+  }
+  .banner.err { background: #fde8e8; border-color: #f0baba; color: #8a2020; }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 36px;
+    line-height: 1.8;
+  }
+  footer a { color: var(--muted); }
+
+  @media (max-width: 720px) {
+    .wrap { padding: 24px 14px 60px; }
+    h1 { font-size: 22px; }
+    .filter-label { width: 38px; font-size: 12px; }
+    .paper { padding: 14px 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>体育期刊雷达 <span class="en">Sports Journal Radar</span></h1>
+    <p class="tagline">16 本顶级期刊的月度新论文聚合 · 按主题 / 方法 / 期刊分类</p>
+  </header>
+
+  <div class="controls">
+    <select id="monthSelect"></select>
+    <button class="btn-primary" id="refreshBtn">↻ 拉取 / 刷新</button>
+    <span class="status" id="status"></span>
+  </div>
+
+  <div id="banner"></div>
+
+  <div class="filter-section">
+    <div class="filter-row">
+      <div class="filter-label">主题</div>
+      <div class="chips" id="topicChips"></div>
+    </div>
+    <div class="filter-row">
+      <div class="filter-label">方法</div>
+      <div class="chips" id="methodChips"></div>
+    </div>
+    <div class="filter-row">
+      <div class="filter-label">期刊</div>
+      <div class="chips" id="journalChips"></div>
+    </div>
+  </div>
+
+  <div class="summary-bar">
+    <div class="left">
+      <span id="countText">共 0 篇</span>
+      <label><input type="checkbox" id="favOnly"> 仅看收藏 <span id="favCount">(0)</span></label>
+    </div>
+    <button class="btn-small" id="clearFilters">清空筛选</button>
+  </div>
+
+  <div id="papersList"></div>
+  <div id="emptyState"></div>
+
+  <footer>
+    数据源：NCBI PubMed E-utilities · 翻译：MyMemory<br>
+    本地缓存，关闭浏览器不会丢失 · 如遇网络问题试 Edge/Firefox
+  </footer>
+</div>
+
+<script>
+// ============ 期刊元数据 ============
+const JOURNALS = [
+  // 核心综合
+  { id: 'bjsm',    abbr: 'Br J Sports Med',              short: 'BJSM',   zh: '英国运动医学杂志',           group: 'core' },
+  { id: 'sm',      abbr: 'Sports Med',                    short: 'SportsMed', zh: '运动医学',                group: 'core' },
+  { id: 'msse',    abbr: 'Med Sci Sports Exerc',          short: 'MSSE',   zh: '运动医学与科学',             group: 'core' },
+  { id: 'jss',     abbr: 'J Sports Sci',                  short: 'JSS',    zh: '运动科学杂志',               group: 'core' },
+  { id: 'sjmss',   abbr: 'Scand J Med Sci Sports',        short: 'SJMSS',  zh: '斯堪的纳维亚运动医学',       group: 'core' },
+  // 生理 / 表现
+  { id: 'ijspp',   abbr: 'Int J Sports Physiol Perform',  short: 'IJSPP',  zh: '国际运动生理与表现',         group: 'physio' },
+  { id: 'ejap',    abbr: 'Eur J Appl Physiol',            short: 'EJAP',   zh: '欧洲应用生理学',             group: 'physio' },
+  { id: 'jap',     abbr: 'J Appl Physiol (1985)',         short: 'JAP',    zh: '应用生理学杂志',             group: 'physio' },
+  { id: 'jscr',    abbr: 'J Strength Cond Res',           short: 'JSCR',   zh: '力量与体能研究',             group: 'physio' },
+  // 运动医学 / 损伤
+  { id: 'ajsm',    abbr: 'Am J Sports Med',               short: 'AJSM',   zh: '美国运动医学',               group: 'clinic' },
+  { id: 'jospt',   abbr: 'J Orthop Sports Phys Ther',     short: 'JOSPT',  zh: '骨科与运动物理治疗',         group: 'clinic' },
+  { id: 'cjsm',    abbr: 'Clin J Sport Med',              short: 'CJSM',   zh: '临床运动医学',               group: 'clinic' },
+  { id: 'jsms',    abbr: 'J Sci Med Sport',               short: 'JSMS',   zh: '科学与运动医学',             group: 'clinic' },
+  // 其他 / 小众
+  { id: 'physrep', abbr: 'Physiol Rep',                   short: 'PhysRep',zh: '生理学报告',                 group: 'other' },
+  { id: 'frphys',  abbr: 'Front Physiol',                 short: 'FrontPhys',zh: '生理学前沿',               group: 'other' },
+  { id: 'frsal',   abbr: 'Front Sports Act Living',       short: 'FrontSAL',zh: '运动与积极生活前沿',        group: 'other' },
+];
+
+const GROUP_LABEL = { core: '核心综合', physio: '生理/表现', clinic: '运动医学/损伤', other: '其他' };
+
+// ============ 分类规则 ============
+// 关键词（小写匹配标题+摘要+MeSH）
+const TOPIC_RULES = [
+  { id: 'fatigue',   name: '疲劳与恢复', kw: ['fatigue','recovery','hrv','heart rate variability','dfa','detrended fluctuation','tremor','overtraining','overreaching','sleep','autonomic','parasympathetic','monitoring recovery'] },
+  { id: 'load',      name: '训练负荷',   kw: ['training load','periodization','periodisation','load management','acwr','workload','session rpe','srpe','training monitoring','internal load','external load'] },
+  { id: 'biomech',   name: '生物力学',   kw: ['biomechanic','kinematic','kinetic','motion analysis','gait','running mechanic','ground reaction','joint angle','force platform','stride','emg','electromyograph'] },
+  { id: 'nutri',     name: '营养与补剂', kw: ['nutrition','supplement','hydration','ergogenic','caffeine','creatine','beta-alanine','nitrate','carbohydrate','protein intake','diet','ketogenic','vitamin','iron supplementation'] },
+  { id: 'injury',    name: '损伤与康复', kw: ['injury','injuries','rehabilitation','acl','concussion','return to play','return to sport','hamstring','tendinopathy','stress fracture','prehabilitation','musculoskeletal'] },
+  { id: 'psych',     name: '心理与行为', kw: ['psychology','psychological','motivation','mental','mood','anxiety','stress','behavior','behaviour','adherence','burnout','self-efficacy','resilience'] },
+  { id: 'perf',      name: '表现分析',   kw: ['performance analysis','match analysis','tactical','tactics','notational','game','competition analysis','time-motion','match running','technical performance'] },
+  { id: 'female',    name: '女性运动员', kw: ['female athlete','women athlete','menstrual','menstruation','pregnancy','postpartum','oral contraceptive','estrogen','female sport'] },
+  { id: 'age',       name: '青少年/老年', kw: ['youth','pediatric','adolescent','children','master athlete','masters athlete','aging','elderly','older adult','veteran athlete'] },
+  { id: 'env',       name: '环境生理',   kw: ['heat','hot environment','cold exposure','altitude','hypoxia','hyperbaric','acclimatization','acclimatisation','thermoregulat'] },
+  { id: 'strength',  name: '力量与爆发', kw: ['strength training','resistance training','power training','plyometric','hypertrophy','1rm','one repetition maximum','velocity-based','power output'] },
+  { id: 'endurance', name: '耐力与有氧', kw: ['endurance','aerobic','vo2max','vo2 max','lactate threshold','anaerobic threshold','cycling performance','running performance','rowing','kayak','kayaking','paddling'] },
+];
+
+const METHOD_RULES = [
+  { id: 'rct',       name: 'RCT',        kw: ['randomized controlled','randomised controlled','randomized trial','randomised trial',' rct '] , pt: ['Randomized Controlled Trial'] },
+  { id: 'meta',      name: 'Meta 分析',  kw: ['meta-analysis','metaanalysis','meta analysis'], pt: ['Meta-Analysis'] },
+  { id: 'sysrev',    name: '系统综述',   kw: ['systematic review','prisma','scoping review'], pt: ['Systematic Review'] },
+  { id: 'review',    name: '叙事综述',   kw: ['narrative review','literature review'], pt: ['Review'] },
+  { id: 'cohort',    name: '纵向/队列',  kw: ['prospective cohort','longitudinal study','cohort study','follow-up study'], pt: [] },
+  { id: 'cross',     name: '横断面',     kw: ['cross-sectional','cross sectional'], pt: [] },
+  { id: 'case',      name: '个案',       kw: ['case report','case series','case study'], pt: ['Case Reports'] },
+];
+
+// ============ 存储 ============
+const CACHE_VERSION = 'sjr-v1';
+const KEY_PAPERS = (ym) => `${CACHE_VERSION}-papers-${ym}`;
+const KEY_TRANS = `${CACHE_VERSION}-translations`;
+const KEY_FAV = `${CACHE_VERSION}-favorites`;
+const KEY_STATE = `${CACHE_VERSION}-state`;
+
+function loadJSON(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch(e) { return fallback; }
+}
+function saveJSON(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+let translations = loadJSON(KEY_TRANS, {});
+let favorites = new Set(loadJSON(KEY_FAV, []));
+let uiState = loadJSON(KEY_STATE, { topics: [], methods: [], journals: [], favOnly: false, expanded: {} });
+let currentMonth = '';
+let currentPapers = [];
+let translationQueue = [];
+let translating = false;
+
+// ============ 日期辅助 ============
+function ym(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
+function ymToRange(ymStr) {
+  const [y, m] = ymStr.split('-').map(Number);
+  const start = `${y}/${String(m).padStart(2,'0')}/01`;
+  const lastDay = new Date(y, m, 0).getDate();
+  const end = `${y}/${String(m).padStart(2,'0')}/${String(lastDay).padStart(2,'0')}`;
+  return { start, end };
+}
+function monthOptions() {
+  const opts = [];
+  const now = new Date();
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    opts.push({ value: ym(d), label: `${d.getFullYear()} 年 ${d.getMonth()+1} 月` });
+  }
+  return opts;
+}
+
+// ============ PubMed API ============
+const EUTILS = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
+
+async function fetchJson(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+async function fetchText(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.text();
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function searchJournal(journal, start, end) {
+  const term = `"${journal.abbr}"[Journal] AND ("${start}"[PDAT] : "${end}"[PDAT])`;
+  const url = `${EUTILS}/esearch.fcgi?db=pubmed&term=${encodeURIComponent(term)}&retmax=100&retmode=json`;
+  const j = await fetchJson(url);
+  return (j.esearchresult?.idlist) || [];
+}
+
+async function fetchDetails(pmids) {
+  if (pmids.length === 0) return [];
+  const url = `${EUTILS}/efetch.fcgi?db=pubmed&id=${pmids.join(',')}&rettype=abstract&retmode=xml`;
+  const xml = await fetchText(url);
+  return parseArticles(xml);
+}
+
+function parseArticles(xmlText) {
+  const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+  const nodes = doc.querySelectorAll('PubmedArticle');
+  return Array.from(nodes).map(a => {
+    const pmid = a.querySelector('MedlineCitation > PMID')?.textContent || '';
+    const title = (a.querySelector('ArticleTitle')?.textContent || '').trim();
+    const abstractTexts = Array.from(a.querySelectorAll('Abstract > AbstractText')).map(n => {
+      const label = n.getAttribute('Label');
+      const text = n.textContent.trim();
+      return label ? `${label}: ${text}` : text;
+    });
+    const abstract = abstractTexts.join('\n\n');
+    const authorNodes = Array.from(a.querySelectorAll('AuthorList > Author'));
+    const authors = authorNodes.map(au => {
+      const last = au.querySelector('LastName')?.textContent || '';
+      const initials = au.querySelector('Initials')?.textContent || '';
+      return `${last}${initials ? ' ' + initials : ''}`.trim();
+    }).filter(Boolean);
+    const journalAbbr = a.querySelector('Journal > ISOAbbreviation')?.textContent
+      || a.querySelector('MedlineJournalInfo > MedlineTA')?.textContent
+      || '';
+    const pubDate = a.querySelector('Article > Journal > JournalIssue > PubDate')
+      || a.querySelector('PubmedData > History > PubMedPubDate[PubStatus="pubmed"]');
+    const y = pubDate?.querySelector('Year')?.textContent || '';
+    const m = pubDate?.querySelector('Month')?.textContent || '';
+    const d = pubDate?.querySelector('Day')?.textContent || '';
+    const doi = Array.from(a.querySelectorAll('ArticleIdList > ArticleId')).find(e => e.getAttribute('IdType') === 'doi')?.textContent || '';
+    const mesh = Array.from(a.querySelectorAll('MeshHeadingList > MeshHeading > DescriptorName')).map(m => m.textContent);
+    const pubTypes = Array.from(a.querySelectorAll('PublicationTypeList > PublicationType')).map(p => p.textContent);
+    return { pmid, title, abstract, authors, journalAbbr, pubDate: { y, m, d }, doi, mesh, pubTypes };
+  });
+}
+
+// ============ 分类 ============
+function classify(paper) {
+  const hay = (paper.title + ' ' + paper.abstract + ' ' + (paper.mesh || []).join(' ')).toLowerCase();
+  const topics = TOPIC_RULES.filter(r => r.kw.some(k => hay.includes(k))).map(r => r.id);
+  const methods = [];
+  METHOD_RULES.forEach(r => {
+    const kwHit = r.kw.some(k => hay.includes(k));
+    const ptHit = r.pt && r.pt.some(p => paper.pubTypes.includes(p));
+    if (kwHit || ptHit) methods.push(r.id);
+  });
+  // 精简"叙事综述"：如果已经被判为系统综述或meta，去掉
+  if ((methods.includes('sysrev') || methods.includes('meta')) && methods.includes('review')) {
+    return { topics, methods: methods.filter(m => m !== 'review') };
+  }
+  return { topics, methods };
+}
+
+function attachJournal(paper) {
+  // 根据 journalAbbr 匹配本地期刊 id；不严格匹配则模糊比对
+  const abbrLower = (paper.journalAbbr || '').toLowerCase();
+  const match = JOURNALS.find(j => j.abbr.toLowerCase() === abbrLower)
+    || JOURNALS.find(j => abbrLower.includes(j.abbr.toLowerCase().replace(/[^a-z]/g, '')))
+    || JOURNALS.find(j => abbrLower.includes(j.short.toLowerCase()));
+  return match ? match.id : null;
+}
+
+// ============ 翻译 ============
+async function translateTitle(text) {
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|zh-CN`;
+  try {
+    const j = await fetchJson(url);
+    const t = j.responseData?.translatedText;
+    if (t && !t.toLowerCase().includes('mymemory warning')) return t;
+  } catch(e) {}
+  return null;
+}
+
+async function processTranslationQueue() {
+  if (translating) return;
+  translating = true;
+  while (translationQueue.length > 0) {
+    const pmid = translationQueue.shift();
+    if (translations[pmid]) continue;
+    const paper = currentPapers.find(p => p.pmid === pmid);
+    if (!paper) continue;
+    const zh = await translateTitle(paper.title);
+    if (zh) {
+      translations[pmid] = zh;
+      saveJSON(KEY_TRANS, translations);
+      const titleEl = document.querySelector(`.paper[data-pmid="${pmid}"] .paper-title-zh`);
+      if (titleEl) {
+        titleEl.textContent = zh;
+        titleEl.classList.remove('loading');
+      }
+    } else {
+      const titleEl = document.querySelector(`.paper[data-pmid="${pmid}"] .paper-title-zh`);
+      if (titleEl) titleEl.remove();
+    }
+    await sleep(500);
+  }
+  translating = false;
+}
+
+function queueTranslations(papers) {
+  papers.forEach(p => {
+    if (!translations[p.pmid] && !translationQueue.includes(p.pmid)) {
+      translationQueue.push(p.pmid);
+    }
+  });
+  processTranslationQueue();
+}
+
+// ============ 主流程：拉取 ============
+async function fetchAll(force = false) {
+  const month = currentMonth;
+  const cacheKey = KEY_PAPERS(month);
+  if (!force) {
+    const cached = loadJSON(cacheKey, null);
+    if (cached && cached.papers) {
+      currentPapers = cached.papers;
+      renderAll();
+      queueTranslations(currentPapers);
+      setStatus(`${cached.papers.length} 篇 · 缓存于 ${new Date(cached.fetchedAt).toLocaleString('zh-CN')}`, 'ok');
+      return;
+    }
+  }
+
+  const range = ymToRange(month);
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = true;
+  btn.textContent = '加载中...';
+
+  const listEl = document.getElementById('papersList');
+  const emptyEl = document.getElementById('emptyState');
+  emptyEl.innerHTML = `
+    <div class="loading-state">
+      <div>正在从 PubMed 拉取 16 本期刊数据...</div>
+      <div class="bar"><div class="bar-fill" id="loadFill" style="width:0%"></div></div>
+      <div class="current" id="loadCurrent">准备中...</div>
+    </div>`;
+  listEl.innerHTML = '';
+
+  const allPapers = [];
+  const failed = [];
+  for (let i = 0; i < JOURNALS.length; i++) {
+    const jnl = JOURNALS[i];
+    document.getElementById('loadCurrent').textContent = `${jnl.short} (${i+1}/${JOURNALS.length})`;
+    document.getElementById('loadFill').style.width = `${((i)/JOURNALS.length)*100}%`;
+    try {
+      const ids = await searchJournal(jnl, range.start, range.end);
+      await sleep(350);
+      if (ids.length > 0) {
+        // efetch 分批，每批 30 条
+        for (let k = 0; k < ids.length; k += 30) {
+          const batch = ids.slice(k, k + 30);
+          const details = await fetchDetails(batch);
+          details.forEach(p => {
+            p.journalId = jnl.id;
+            const { topics, methods } = classify(p);
+            p.topics = topics;
+            p.methods = methods;
+          });
+          allPapers.push(...details);
+          await sleep(350);
+        }
+      }
+    } catch(e) {
+      console.error(`Failed ${jnl.short}:`, e);
+      failed.push(jnl.short);
+    }
+  }
+
+  document.getElementById('loadFill').style.width = '100%';
+
+  // 去重（有些期刊可能用了 matching 导致重复）+ 按日期倒序
+  const seen = new Set();
+  const dedup = [];
+  allPapers.forEach(p => {
+    if (!seen.has(p.pmid)) { seen.add(p.pmid); dedup.push(p); }
+  });
+  dedup.sort((a,b) => {
+    const da = `${a.pubDate.y}-${a.pubDate.m}-${a.pubDate.d}`;
+    const db = `${b.pubDate.y}-${b.pubDate.m}-${b.pubDate.d}`;
+    return db.localeCompare(da);
+  });
+
+  currentPapers = dedup;
+  saveJSON(cacheKey, { papers: dedup, fetchedAt: Date.now() });
+
+  btn.disabled = false;
+  btn.textContent = '↻ 拉取 / 刷新';
+  emptyEl.innerHTML = '';
+
+  const banner = document.getElementById('banner');
+  if (failed.length > 0) {
+    banner.innerHTML = `<div class="banner">⚠ ${failed.length} 个期刊加载失败：${failed.join('、')}。可稍后再试。</div>`;
+  } else {
+    banner.innerHTML = '';
+  }
+
+  setStatus(`${dedup.length} 篇 · ${new Date().toLocaleString('zh-CN')} 更新`, 'ok');
+  renderAll();
+  queueTranslations(currentPapers);
+}
+
+function setStatus(text, cls = '') {
+  const el = document.getElementById('status');
+  el.textContent = text;
+  el.className = 'status ' + cls;
+}
+
+// ============ 渲染 ============
+function renderChips() {
+  // 主题 chips
+  const topicEl = document.getElementById('topicChips');
+  const methodEl = document.getElementById('methodChips');
+  const journalEl = document.getElementById('journalChips');
+
+  const topicCounts = {}, methodCounts = {}, journalCounts = {};
+  currentPapers.forEach(p => {
+    (p.topics || []).forEach(t => topicCounts[t] = (topicCounts[t] || 0) + 1);
+    (p.methods || []).forEach(m => methodCounts[m] = (methodCounts[m] || 0) + 1);
+    if (p.journalId) journalCounts[p.journalId] = (journalCounts[p.journalId] || 0) + 1;
+  });
+
+  topicEl.innerHTML = TOPIC_RULES
+    .filter(r => topicCounts[r.id] > 0)
+    .map(r => `<button class="chip ${uiState.topics.includes(r.id)?'active':''}" data-dim="topics" data-id="${r.id}">${r.name}<span class="count">${topicCounts[r.id]}</span></button>`)
+    .join('');
+
+  methodEl.innerHTML = METHOD_RULES
+    .filter(r => methodCounts[r.id] > 0)
+    .map(r => `<button class="chip ${uiState.methods.includes(r.id)?'active':''}" data-dim="methods" data-id="${r.id}">${r.name}<span class="count">${methodCounts[r.id]}</span></button>`)
+    .join('');
+
+  // 期刊按组排列
+  const groups = ['core','physio','clinic','other'];
+  let html = '';
+  groups.forEach(g => {
+    const js = JOURNALS.filter(j => j.group === g && journalCounts[j.id] > 0);
+    js.forEach(j => {
+      html += `<button class="chip ${uiState.journals.includes(j.id)?'active':''}" data-dim="journals" data-id="${j.id}" title="${j.zh} · ${j.abbr}">${j.short}<span class="count">${journalCounts[j.id]}</span></button>`;
+    });
+  });
+  journalEl.innerHTML = html;
+
+  document.querySelectorAll('.chip[data-dim]').forEach(el => {
+    el.addEventListener('click', () => {
+      const dim = el.dataset.dim;
+      const id = el.dataset.id;
+      const arr = uiState[dim];
+      const idx = arr.indexOf(id);
+      if (idx >= 0) arr.splice(idx, 1); else arr.push(id);
+      saveJSON(KEY_STATE, uiState);
+      renderChips();
+      renderList();
+    });
+  });
+}
+
+function filterPapers() {
+  return currentPapers.filter(p => {
+    if (uiState.favOnly && !favorites.has(p.pmid)) return false;
+    if (uiState.topics.length && !uiState.topics.every(t => (p.topics || []).includes(t))) return false;
+    if (uiState.methods.length && !uiState.methods.every(m => (p.methods || []).includes(m))) return false;
+    if (uiState.journals.length && !uiState.journals.includes(p.journalId)) return false;
+    return true;
+  });
+}
+
+function renderList() {
+  const list = filterPapers();
+  document.getElementById('countText').textContent = `共 ${list.length} 篇`;
+  document.getElementById('favCount').textContent = `(${favorites.size})`;
+
+  const listEl = document.getElementById('papersList');
+  if (list.length === 0) {
+    listEl.innerHTML = `<div class="empty">当前筛选条件下没有论文。${currentPapers.length === 0 ? '请点"拉取 / 刷新"加载数据' : '试试清空筛选'}</div>`;
+    return;
+  }
+
+  listEl.innerHTML = list.map(p => renderPaper(p)).join('');
+
+  document.querySelectorAll('.paper-star').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const pmid = btn.dataset.pmid;
+      if (favorites.has(pmid)) favorites.delete(pmid); else favorites.add(pmid);
+      saveJSON(KEY_FAV, [...favorites]);
+      btn.classList.toggle('on');
+      btn.textContent = favorites.has(pmid) ? '★' : '☆';
+      btn.closest('.paper').classList.toggle('favorited');
+      document.getElementById('favCount').textContent = `(${favorites.size})`;
+    });
+  });
+  document.querySelectorAll('.paper-expand').forEach(el => {
+    el.addEventListener('click', () => {
+      const card = el.closest('.paper');
+      card.classList.toggle('expanded');
+      uiState.expanded[card.dataset.pmid] = card.classList.contains('expanded');
+      saveJSON(KEY_STATE, uiState);
+      el.textContent = card.classList.contains('expanded') ? '收起摘要 ▲' : '展开摘要 ▼';
+    });
+  });
+}
+
+function renderPaper(p) {
+  const jnl = JOURNALS.find(j => j.id === p.journalId);
+  const jnlShort = jnl ? jnl.short : (p.journalAbbr || '?');
+  const date = [p.pubDate.y, p.pubDate.m, p.pubDate.d].filter(Boolean).join('-');
+  const authors = p.authors.length > 0
+    ? (p.authors.length > 3 ? `${p.authors.slice(0,3).join(', ')}, 等` : p.authors.join(', '))
+    : '';
+  const zh = translations[p.pmid];
+  const favOn = favorites.has(p.pmid);
+  const expanded = uiState.expanded[p.pmid];
+
+  const topicTags = (p.topics || []).map(t => {
+    const rule = TOPIC_RULES.find(r => r.id === t);
+    return rule ? `<span class="tag">${rule.name}</span>` : '';
+  }).join('');
+  const methodTags = (p.methods || []).map(m => {
+    const rule = METHOD_RULES.find(r => r.id === m);
+    return rule ? `<span class="tag method">${rule.name}</span>` : '';
+  }).join('');
+  const jnlTag = jnl ? `<span class="tag journal">${jnl.short}</span>` : '';
+
+  const pubmedUrl = `https://pubmed.ncbi.nlm.nih.gov/${p.pmid}/`;
+  const doiUrl = p.doi ? `https://doi.org/${p.doi}` : '';
+
+  const abstractHtml = p.abstract
+    ? p.abstract.split('\n\n').map(para => `<p>${escapeHtml(para)}</p>`).join('')
+    : '<p style="color:var(--muted)">暂无摘要</p>';
+
+  return `
+    <div class="paper${favOn ? ' favorited' : ''}${expanded ? ' expanded' : ''}" data-pmid="${p.pmid}">
+      <div class="paper-head">
+        <div class="paper-titles">
+          <div class="paper-title">${escapeHtml(p.title)}</div>
+          <div class="paper-title-zh${zh ? '' : ' loading'}">${zh ? escapeHtml(zh) : '翻译中...'}</div>
+        </div>
+        <button class="paper-star ${favOn ? 'on' : ''}" data-pmid="${p.pmid}" title="收藏">${favOn ? '★' : '☆'}</button>
+      </div>
+      <div class="paper-meta">
+        <span class="journal">${jnlShort}</span>
+        ${date ? `<span>${date}</span>` : ''}
+        ${authors ? `<span>${escapeHtml(authors)}</span>` : ''}
+        <a href="${pubmedUrl}" target="_blank">PMID ${p.pmid}</a>
+        ${doiUrl ? `<a href="${doiUrl}" target="_blank">DOI</a>` : ''}
+      </div>
+      <div class="paper-tags">
+        ${topicTags}${methodTags}${jnlTag}
+      </div>
+      <div class="paper-expand">${expanded ? '收起摘要 ▲' : '展开摘要 ▼'}</div>
+      <div class="paper-abstract">${abstractHtml}</div>
+    </div>
+  `;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderAll() {
+  renderChips();
+  renderList();
+}
+
+// ============ 初始化 ============
+function init() {
+  // 月份下拉
+  const sel = document.getElementById('monthSelect');
+  sel.innerHTML = monthOptions().map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+  currentMonth = ym(new Date());
+  sel.value = currentMonth;
+  sel.addEventListener('change', () => {
+    currentMonth = sel.value;
+    const cached = loadJSON(KEY_PAPERS(currentMonth), null);
+    if (cached && cached.papers) {
+      currentPapers = cached.papers;
+      renderAll();
+      queueTranslations(currentPapers);
+      setStatus(`${cached.papers.length} 篇 · 缓存于 ${new Date(cached.fetchedAt).toLocaleString('zh-CN')}`, 'ok');
+    } else {
+      currentPapers = [];
+      renderAll();
+      setStatus('此月份尚未加载，点刷新拉取', '');
+      document.getElementById('emptyState').innerHTML = `<div class="empty"><p>${sel.options[sel.selectedIndex].text}尚未加载</p><button class="btn-primary" onclick="fetchAll(true)">立即加载</button></div>`;
+    }
+  });
+
+  document.getElementById('refreshBtn').addEventListener('click', () => fetchAll(true));
+  document.getElementById('favOnly').checked = uiState.favOnly;
+  document.getElementById('favOnly').addEventListener('change', (e) => {
+    uiState.favOnly = e.target.checked;
+    saveJSON(KEY_STATE, uiState);
+    renderList();
+  });
+  document.getElementById('clearFilters').addEventListener('click', () => {
+    uiState.topics = []; uiState.methods = []; uiState.journals = [];
+    saveJSON(KEY_STATE, uiState);
+    renderChips();
+    renderList();
+  });
+
+  // 初次加载
+  const cached = loadJSON(KEY_PAPERS(currentMonth), null);
+  if (cached && cached.papers) {
+    currentPapers = cached.papers;
+    renderAll();
+    queueTranslations(currentPapers);
+    setStatus(`${cached.papers.length} 篇 · 缓存于 ${new Date(cached.fetchedAt).toLocaleString('zh-CN')}`, 'ok');
+  } else {
+    renderAll();
+    setStatus('本月尚未加载，点"拉取 / 刷新"开始', '');
+    document.getElementById('emptyState').innerHTML = `<div class="empty"><p>本月尚未加载任何数据</p><button class="btn-primary" onclick="fetchAll(true)">开始加载</button></div>`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>
